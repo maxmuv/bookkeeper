@@ -2,9 +2,11 @@
 Модуль описывает репозиторий, работающий с СУБД SQLite
 """
 import datetime
+from dataclasses import field
 import sqlite3
 from inspect import get_annotations
 from typing import Any
+import os
 
 from bookkeeper.repository.abstract_repository import AbstractRepository, T
 
@@ -24,22 +26,26 @@ def convert_types(annotation_dict: dict)->list[str]:
     for t in list(annotation_dict.values()):
         if type(0) == t:
             res.append("integer")
-        if type("") == t:
+            continue
+        else:
             res.append("text")
-        if type(datetime.datetime.now()) == t:
-            res.append("text")
+            continue
     return res
 
-def str2obj(cls: type, s: str)->T:
+def str2obj(cls: type, s: list, fields: dict)->T|None:
+    if len(s) == 0:
+        return None
     args_tuple = s[0]
-    res = cls(*args_tuple)
+    res = cls()
+    for i, f in enumerate(fields):
+        setattr(res, f, args_tuple[i])
     return res
 
 class SqliteRepository(AbstractRepository[T]):
     """
     Класс-репозиторий, который обеспечивает подключение к базе данных и работает с ней
     """
-    def __init__(self, db_name: str, cls: type) -> None:
+    def __init__(self, db_name: str, cls: type, remove_after=False) -> None:
         """
         Подключает к базе данных, создает таблицу, если она не существует
 
@@ -66,6 +72,7 @@ class SqliteRepository(AbstractRepository[T]):
         print(creation_command)
         self.cursor.execute(creation_command)
         self.connection.commit()
+        self.remove_after = remove_after
 
     def add(self, obj: T) -> int:
         names = ', '.join(self.fields.keys())
@@ -83,7 +90,7 @@ class SqliteRepository(AbstractRepository[T]):
         get_command = f"SELECT * FROM t WHERE pk={pk}"
         self.cursor.execute(get_command)
         res_str = self.cursor.fetchall()
-        return str2obj(self.cls, res_str)
+        return str2obj(self.cls, res_str, self.fields)
 
     def get_all(self, where: dict[str, Any] | None = None) -> list[T]:
         get_command = f"SELECT * FROM t"
@@ -97,19 +104,26 @@ class SqliteRepository(AbstractRepository[T]):
         res_attrs = self.cursor.fetchall()
         res = []
         for attr in res_attrs:
-            res.append(str2obj(attr))
+            res.append(str2obj(attr, ))
         return res
 
     def update(self, obj: T) -> None:
-        update_command = "UPDATE t SET "
-        for i, k in enumerate(self.fields.keys()):
-            if k != "pk":
-                update_command += f"{k}={getattr(obj, k)}"
-            if i+1 != len(self.fields.keys()):
-                update_command += ", "
+        if len(self.fields.keys()) != 1:
+            update_command = "UPDATE t SET "
+            for i, k in enumerate(self.fields.keys()):
+                if k != "pk":
+                    if self.fields[k] == "int":
+                        update_command += f"{k}={getattr(obj, k)}"
+                    else:
+                        update_command += f"{k}='{getattr(obj, k)}'"
+                else:
+                    continue
+                if i+1 != len(self.fields.keys()):
+                    update_command += ", "
             update_command += f" WHERE pk = {getattr(obj, 'pk')}"
-        self.cursor.execute(update_command)
-        self.connection.commit()
+            self.cursor.execute(update_command)
+            self.connection.commit()
+        return None
 
     def delete(self, pk: int) -> None:
         removal_command = f"DELETE FROM t WHERE pk={pk}"
@@ -118,4 +132,6 @@ class SqliteRepository(AbstractRepository[T]):
 
     def __del__(self) -> None:
         self.connection.close()
+        if self.remove_after:
+            os.remove(self.db_name)
 
