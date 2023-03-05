@@ -65,6 +65,7 @@ class SqliteRepository(AbstractRepository[T]):
                 creation_command += ",\n"
         print(creation_command)
         self.cursor.execute(creation_command)
+        self.connection.commit()
 
     def add(self, obj: T) -> int:
         names = ', '.join(self.fields.keys())
@@ -74,6 +75,7 @@ class SqliteRepository(AbstractRepository[T]):
         self.cursor.execute(
             f'INSERT INTO t ({names}) VALUES ({p})', values
         )
+        self.connection.commit()
         obj.pk = self.cursor.lastrowid
         return obj.pk
 
@@ -83,16 +85,37 @@ class SqliteRepository(AbstractRepository[T]):
         res_str = self.cursor.fetchall()
         return str2obj(self.cls, res_str)
 
-
     def get_all(self, where: dict[str, Any] | None = None) -> list[T]:
-        pass
+        get_command = f"SELECT * FROM t"
+        if bool(where):
+            get_command += " WHERE "
+            for i, k in enumerate(where):
+                get_command += f"{k}={where[k]} "
+                if i+1 != len(where):
+                    get_command += "AND "
+        self.cursor.execute(get_command)
+        res_attrs = self.cursor.fetchall()
+        res = []
+        for attr in res_attrs:
+            res.append(str2obj(attr))
+        return res
 
     def update(self, obj: T) -> None:
-        pass
+        update_command = "UPDATE t SET "
+        for i, k in enumerate(self.fields.keys()):
+            if k != "pk":
+                update_command += f"{k}={getattr(obj, k)}"
+            if i+1 != len(self.fields.keys()):
+                update_command += ", "
+            update_command += f" WHERE pk = {getattr(obj, 'pk')}"
+        self.cursor.execute(update_command)
+        self.connection.commit()
 
     def delete(self, pk: int) -> None:
-        pass
+        removal_command = f"DELETE FROM t WHERE pk={pk}"
+        self.cursor.execute(removal_command)
+        self.connection.commit()
 
     def __del__(self) -> None:
-        pass
+        self.connection.close()
 
