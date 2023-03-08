@@ -77,13 +77,14 @@ class SqliteRepository(AbstractRepository[T]):
     def add(self, obj: T) -> int:
         names = ', '.join(self.fields.keys())
         p = ', '.join("?" * len(self.fields))
+        self.cursor.execute("SELECT * FROM t")
+        obj.pk = len(self.cursor.fetchall())
         values = [getattr(obj, x) for x in self.fields]
         self.cursor.execute('PRAGMA foreign_keys = ON')
         self.cursor.execute(
             f'INSERT INTO t ({names}) VALUES ({p})', values
         )
         self.connection.commit()
-        obj.pk = self.cursor.lastrowid
         return obj.pk
 
     def get(self, pk: int) -> T | None:
@@ -97,14 +98,17 @@ class SqliteRepository(AbstractRepository[T]):
         if bool(where):
             get_command += " WHERE "
             for i, k in enumerate(where):
-                get_command += f"{k}={where[k]} "
+                if self.fields[k] == "int":
+                    get_command += f"{k}={where[k]} "
+                else:
+                    get_command += f"{k}='{where[k]}' "
                 if i+1 != len(where):
                     get_command += "AND "
         self.cursor.execute(get_command)
         res_attrs = self.cursor.fetchall()
         res = []
         for attr in res_attrs:
-            res.append(str2obj(attr, ))
+            res.append(str2obj(self.cls, [attr], self.fields))
         return res
 
     def update(self, obj: T) -> None:
