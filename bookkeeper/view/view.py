@@ -1,7 +1,5 @@
 from bookkeeper.view.abstract_view import AbstractView
 from typing import Callable
-from bookkeeper.models.expense import Expense
-from bookkeeper.models.category import Category
 from bookkeeper.view.expense_view import ExpenseView
 
 from PySide6 import QtWidgets
@@ -18,7 +16,9 @@ class View(AbstractView):
         self.window.setWindowTitle('The Bookkeeper App')
         self.window.resize(width, height)
         self.vbox = QtWidgets.QVBoxLayout()
+        expense_msg = QtWidgets.QLabel("Последние расходы")
         self.expense_view = ExpenseView()
+        self.vbox.addWidget(expense_msg)
         self.vbox.addWidget(self.expense_view)
         self.window.setLayout(self.vbox)
 
@@ -31,8 +31,8 @@ class View(AbstractView):
     def set_expense_list(self, exp_list: list[list[str]]) -> None:
         self.expense_view.set_data(exp_list)
 
-    def register_cat_modifier(self, handler: Callable[[Category], None]):
+    def register_cat_modifier(self, handler: Callable[[int], None]):
         pass
 
-    def register_exp_modifier(self, handler: Callable[[Expense], None]):
-        pass
+    def register_exp_modifier(self, handler: Callable[[int, int, str], None]):
+        self.expense_view.set_handler(handler)

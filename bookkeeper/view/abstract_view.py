@@ -1,8 +1,5 @@
 from typing import Protocol, Callable
 from abc import abstractmethod
-from bookkeeper.models.category import Category
-from bookkeeper.models.expense import Expense
-from PySide6 import QtWidgets
 
 
 class AbstractView(Protocol):
@@ -19,9 +16,9 @@ class AbstractView(Protocol):
         pass
 
     @abstractmethod
-    def register_cat_modifier(self, handler: Callable[[Category], None]):
+    def register_cat_modifier(self, handler: Callable[[int], None]):
         pass
 
     @abstractmethod
-    def register_exp_modifier(self, handler: Callable[[Expense], None]):
+    def register_exp_modifier(self, handler: Callable[[int, int, str], None]):
         pass
