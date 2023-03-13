@@ -8,7 +8,7 @@ class AbstractView(Protocol):
         pass
 
     @abstractmethod
-    def set_budget(self, budget: list[int]) -> None:
+    def set_budget(self, budget: list[list[int]]) -> None:
         pass
 
     @abstractmethod
@@ -21,4 +21,7 @@ class AbstractView(Protocol):
 
     @abstractmethod
     def register_exp_modifier(self, handler: Callable[[int, int, str], None]):
+        pass
+
+    def register_budget_modifier(self, handler: Callable[[int, int, str], None]):
         pass
