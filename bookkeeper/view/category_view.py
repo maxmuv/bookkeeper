@@ -2,6 +2,19 @@ from PySide6 import QtWidgets, QtCore, QtGui
 from typing import Callable
 
 
+class EditDialog(QtWidgets.QDialog):
+    def __init__(self):
+        super().__init__()
+        self.add_del_menu = QtWidgets.QMenu(self)
+        self.setWindowTitle("Категории")
+        self.resize(300, 300)
+        self.add_del_menu.addAction("Добавить")
+        self.add_del_menu.addAction("Удалить")
+
+    def contextMenuEvent(self, event):
+        self.add_del_menu.exec_(event.globalPos())
+
+
 class CategoryView(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
@@ -23,9 +36,7 @@ class CategoryView(QtWidgets.QWidget):
         self.sum_button = QtWidgets.QPushButton("Добавить")
         self.vbox.addWidget(self.sum_button, 2, 1)
         self.setLayout(self.vbox)
-        self.dlg = QtWidgets.QDialog(self)
-        self.dlg.setWindowTitle("Категории")
-        self.dlg.resize(300, 300)
+        self.dlg = EditDialog()
         self.dlg_vbox = QtWidgets.QVBoxLayout()
         self.tree_view = QtWidgets.QTreeWidget()
         self.dlg_vbox.addWidget(self.tree_view)
