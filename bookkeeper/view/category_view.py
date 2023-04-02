@@ -8,11 +8,71 @@ class EditDialog(QtWidgets.QDialog):
         self.add_del_menu = QtWidgets.QMenu(self)
         self.setWindowTitle("Категории")
         self.resize(300, 300)
-        self.add_del_menu.addAction("Добавить")
-        self.add_del_menu.addAction("Удалить")
+        self.dlg_vbox = QtWidgets.QVBoxLayout()
+        self.tree_view = QtWidgets.QTreeWidget()
+
+        def set_cur_item(item, c):
+            self.tree_view.setCurrentItem(item, c)
+        self.tree_view.itemEntered.connect(set_cur_item)
+
+        self.dlg_vbox.addWidget(self.tree_view)
+        self.setLayout(self.dlg_vbox)
+        self.adder_handler = None
+        self.remove_handler = None
+        self.name = ""
 
     def contextMenuEvent(self, event):
         self.add_del_menu.exec_(event.globalPos())
+
+    def set_cat_adder_handler(self, handler: Callable[[str | None, str], None]):
+        def func():
+            item = self.tree_view.currentItem()
+            name_widget = QtWidgets.QDialog()
+            name_widget.setWindowTitle("Название")
+            name_vbox = QtWidgets.QVBoxLayout()
+            line = QtWidgets.QLineEdit()
+            line.resize(50, 10)
+            self.name = ""
+
+            def get_name(text):
+                self.name = text
+
+            def finish_editing():
+                name_widget.close()
+
+            line.textChanged.connect(get_name)
+            line.editingFinished.connect(finish_editing)
+            name_vbox.addWidget(line)
+            name_widget.setLayout(name_vbox)
+            name_widget.exec()
+            try:
+                if item is None:
+                    handler(None, self.name)
+                else:
+                    handler(item.text(self.tree_view.currentColumn()), self.name)
+            except BaseException as ex:
+                QtWidgets.QMessageBox.critical(self, 'Ошибка', str(ex))
+            self.tree_view.setCurrentItem(self.tree_view.invisibleRootItem())
+        self.adder_handler = func
+        action = QtGui.QAction("Добавить",self.add_del_menu)
+        action.triggered.connect(self.adder_handler)
+        self.add_del_menu.addAction(action)
+
+    def set_cat_remover_handler(self, handler: Callable[[str],None]):
+        def func():
+            item = self.tree_view.currentItem()
+            try:
+                if item is None:
+                    handler(None)
+                else:
+                    handler(item.text(self.tree_view.currentColumn()))
+            except BaseException as ex:
+                QtWidgets.QMessageBox.critical(self, 'Ошибка', str(ex))
+            self.tree_view.setCurrentItem(self.tree_view.invisibleRootItem())
+        self.remove_handler = func
+        action = QtGui.QAction("Удалить",self.add_del_menu)
+        action.triggered.connect(self.remove_handler)
+        self.add_del_menu.addAction(action)
 
 
 class CategoryView(QtWidgets.QWidget):
@@ -37,18 +97,16 @@ class CategoryView(QtWidgets.QWidget):
         self.vbox.addWidget(self.sum_button, 2, 1)
         self.setLayout(self.vbox)
         self.dlg = EditDialog()
-        self.dlg_vbox = QtWidgets.QVBoxLayout()
-        self.tree_view = QtWidgets.QTreeWidget()
-        self.dlg_vbox.addWidget(self.tree_view)
-        self.dlg.setLayout(self.dlg_vbox)
         self.current_item = ""
 
     def edit_button_clicked(self):
         self.dlg.exec()
 
     def set_data(self, cat: list[tuple[str, str | None]]) -> None:
-        self.tree_view.invisibleRootItem().setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable)
-        self.tree_view.invisibleRootItem().setExpanded(True)
+        self.dlg.tree_view.clear()
+        self.list_view.clear()
+        self.dlg.tree_view.invisibleRootItem().setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable)
+        self.dlg.tree_view.invisibleRootItem().setExpanded(True)
         cat_list = []
         node_list = {}
         for c_tuple in cat:
@@ -59,7 +117,7 @@ class CategoryView(QtWidgets.QWidget):
             node_list[c_tuple[0]] = child
             cat_list.append(c_tuple[0])
             if c_tuple[1] is None:
-                self.tree_view.invisibleRootItem().addChild(child)
+                self.dlg.tree_view.invisibleRootItem().addChild(child)
             else:
                 node_list[c_tuple[1]].addChild(child)
         self.list_view.addItems(cat_list)
@@ -74,7 +132,13 @@ class CategoryView(QtWidgets.QWidget):
         self.tree_view.itemDoubleClicked.connect(act_handler)
         self.tree_view.itemChanged.connect(change_handler)
 
-    def adder_handler(self, handler: Callable[[int, str],None]):
+    def adder_handler(self, handler: Callable[[int, str], None]):
         def func():
             handler(int(self.line.text()), self.list_view.currentText())
         self.sum_button.clicked.connect(func)
+
+    def set_ctg_adder_handler(self, handler: Callable[[str, str], None]):
+        self.dlg.set_cat_adder_handler(handler)
+
+    def set_ctg_remover_handler(self, handler: Callable[[str], None]):
+        self.dlg.set_cat_remover_handler(handler)

@@ -41,6 +41,12 @@ class View(AbstractView):
     def register_cat_modifier(self, handler: Callable[[str, str], None]):
         self.category_view.register_handler(handler)
 
+    def register_cat_adder(self, handler: Callable[[str, str], None]):
+        self.category_view.set_ctg_adder_handler(handler)
+
+    def register_cat_remover(self, handler: Callable[[str], None]):
+        self.category_view.set_ctg_remover_handler(handler)
+
     def register_exp_modifier(self, handler: Callable[[int, int, str], None]):
         self.expense_view.set_handler(handler)
 

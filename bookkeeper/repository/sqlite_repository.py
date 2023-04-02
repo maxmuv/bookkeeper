@@ -78,7 +78,9 @@ class SqliteRepository(AbstractRepository[T]):
         names = ', '.join(self.fields.keys())
         p = ', '.join("?" * len(self.fields))
         self.cursor.execute("SELECT * FROM t")
-        obj.pk = len(self.cursor.fetchall())
+        ids = [item[-1] for item in self.cursor.fetchall()]
+        if len(ids) != 0:
+            obj.pk = max(ids) + 1
         values = [getattr(obj, x) for x in self.fields]
         self.cursor.execute('PRAGMA foreign_keys = ON')
         self.cursor.execute(
