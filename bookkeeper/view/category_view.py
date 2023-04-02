@@ -55,7 +55,7 @@ class EditDialog(QtWidgets.QDialog):
                 QtWidgets.QMessageBox.critical(self, 'Ошибка', str(ex))
             self.tree_view.setCurrentItem(self.tree_view.invisibleRootItem())
         self.adder_handler = func
-        action = QtGui.QAction("Добавить",self.add_del_menu)
+        action = QtGui.QAction("Добавить", self.add_del_menu)
         action.triggered.connect(self.adder_handler)
         self.add_del_menu.addAction(action)
 

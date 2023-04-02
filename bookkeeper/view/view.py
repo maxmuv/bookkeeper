@@ -47,6 +47,9 @@ class View(AbstractView):
     def register_cat_remover(self, handler: Callable[[str], None]):
         self.category_view.set_ctg_remover_handler(handler)
 
+    def register_exp_remover(self, handler: Callable[[int], None]):
+        self.expense_view.set_del_menu(handler)
+
     def register_exp_modifier(self, handler: Callable[[int, int, str], None]):
         self.expense_view.set_handler(handler)
 

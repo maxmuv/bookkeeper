@@ -22,6 +22,7 @@ class Presenter:
         self.view.register_exp_modifier(self.expense_modifier)
         self.view.register_budget_modifier(self.budget_modifier)
         # self.view.register_cat_modifier(self.ctg_modifier)
+        self.view.register_exp_remover(self.del_handler)
 
     def update_cat_view(self):
         cats = self.cat_repo.get_all()
@@ -140,3 +141,12 @@ class Presenter:
         self.cat_repo.update(cat)
         self.update_exp_view()
         self.update_cat_view()
+
+    def del_handler(self, row: int):
+        exps = self.exp_repo.get_all()
+        for i in range(row, len(exps)):
+            self.exp_repo.delete(exps[i].pk)
+        for i in range(row + 1, len(exps)):
+            self.exp_repo.add(exps[i])
+        self.update_exp_view()
+        self.update_bdg_view()

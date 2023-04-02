@@ -69,7 +69,6 @@ class SqliteRepository(AbstractRepository[T]):
                 creation_command += ");"
             else:
                 creation_command += ",\n"
-        print(creation_command)
         self.cursor.execute(creation_command)
         self.connection.commit()
         self.remove_after = remove_after
