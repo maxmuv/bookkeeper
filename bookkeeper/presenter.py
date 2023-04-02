@@ -1,3 +1,5 @@
+import datetime
+
 from bookkeeper.repository.sqlite_repository import SqliteRepository
 from bookkeeper.view.view import View
 from bookkeeper.models.expense import Expense
@@ -38,6 +40,27 @@ class Presenter:
                     raise ValueError("Не существует категории для одного из расходов")
                 list_exps.append([e.expense_date, str(e.amount), exp_cat.name])
         self.view.set_expense_list(list_exps)
+        self.update_bdg_view()
+
+    def update_bdg_view(self):
+        exps = self.exp_repo.get_all()
+        budget_list = [[0, 0], [0, 0], [0, 0]]
+        dt = datetime.datetime.now()
+        if len(exps) != 0:
+            for e in exps:
+                exp_cat = self.cat_repo.get(e.category)
+                if exp_cat is None:
+                    raise ValueError("Не существует категории для одного из расходов")
+                expdt = datetime.datetime.strptime(str(e.expense_date), "%Y-%m-%d %H:%M:%S.%f")
+                days_pass = abs((dt - expdt).days)
+                if days_pass < 1:
+                    budget_list[0][0] += e.amount
+                if days_pass < 7:
+                    budget_list[1][0] += e.amount
+                th_month = (dt.month == expdt.month) and (dt.month == expdt.month)
+                if th_month:
+                    budget_list[2][0] += e.amount
+        self.view.set_budget(budget_list)
 
     def del_ctg(self, name: str) -> None:
         cats = self.cat_repo.get_all({"name": name})
@@ -47,6 +70,8 @@ class Presenter:
             parents = self.cat_repo.get_all({"parent": cats[0].pk})
             if len(parents) != 0:
                 raise ValueError("Можно удалить только лист дерева категорий")
+            if len(self.exp_repo.get_all({"category": cats[0].pk})) != 0:
+                raise ValueError("Нельзя удалить категорию, присутствующую в расходах")
             self.cat_repo.delete(cats[0].pk)
         self.update_cat_view()
 
