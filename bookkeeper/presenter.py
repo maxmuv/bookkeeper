@@ -12,8 +12,10 @@ class Presenter:
         self.bud_repo = SqliteRepository[Budget]("data/client_budget.db", Budget, True)
         self.view = View(600, 800)
         self.update_cat_view()
+        self.update_exp_view()
         self.view.register_cat_adder(self.add_ctg)
         self.view.register_cat_remover(self.del_ctg)
+        self.view.register_adder_handler(self.expense_adder_handler_for_ctg_view)
 
     def update_cat_view(self):
         cats = self.cat_repo.get_all()
@@ -26,9 +28,19 @@ class Presenter:
                     list_cats.append((c.name, None))
         self.view.set_category_list(list_cats)
 
+    def update_exp_view(self):
+        exps = self.exp_repo.get_all()
+        list_exps = []
+        if len(exps) != 0:
+            for e in exps:
+                exp_cat = self.cat_repo.get(e.category)
+                if exp_cat is None:
+                    raise ValueError("Не существует категории для одного из расходов")
+                list_exps.append([e.expense_date, str(e.amount), exp_cat.name])
+        self.view.set_expense_list(list_exps)
+
     def del_ctg(self, name: str) -> None:
         cats = self.cat_repo.get_all({"name": name})
-        self.cat_repo
         if len(cats) != 0:
             if len(cats) > 1:
                 raise ValueError("Категория должна иметь уникальное название")
@@ -50,3 +62,13 @@ class Presenter:
         cat.name = name
         self.cat_repo.add(cat)
         self.update_cat_view()
+
+    def expense_adder_handler_for_ctg_view(self, amount: int, ctg_name: str) -> None:
+        req_ctg = self.cat_repo.get_all({"name": ctg_name})
+        if len(req_ctg) != 1:
+            raise ValueError("Нет подходящей категории")
+        exp = Expense()
+        exp.amount = amount
+        exp.category = req_ctg[0].pk
+        self.exp_repo.add(exp)
+        self.update_exp_view()

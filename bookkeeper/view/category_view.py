@@ -134,7 +134,10 @@ class CategoryView(QtWidgets.QWidget):
 
     def adder_handler(self, handler: Callable[[int, str], None]):
         def func():
-            handler(int(self.line.text()), self.list_view.currentText())
+            try:
+                handler(int(self.line.text()), self.list_view.currentText())
+            except BaseException as ex:
+                QtWidgets.QMessageBox.critical(self, 'Ошибка', str(ex))
         self.sum_button.clicked.connect(func)
 
     def set_ctg_adder_handler(self, handler: Callable[[str, str], None]):
