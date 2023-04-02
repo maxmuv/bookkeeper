@@ -21,6 +21,7 @@ class Presenter:
         self.view.register_adder_handler(self.expense_adder_handler_for_ctg_view)
         self.view.register_exp_modifier(self.expense_modifier)
         self.view.register_budget_modifier(self.budget_modifier)
+        # self.view.register_cat_modifier(self.ctg_modifier)
 
     def update_cat_view(self):
         cats = self.cat_repo.get_all()
@@ -131,3 +132,11 @@ class Presenter:
         bdg.budget = int(new_field)
         self.bud_repo.update(bdg)
 
+    def ctg_modifier(self, prev: str, cur: str) -> None:
+        if cur == "":
+            ValueError("Название категории не может быть пустым")
+        cat = self.cat_repo.get_all({"name": prev})[0]
+        cat.name = cur
+        self.cat_repo.update(cat)
+        self.update_exp_view()
+        self.update_cat_view()
