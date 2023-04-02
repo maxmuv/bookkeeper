@@ -19,6 +19,7 @@ class ExpenseView(QtWidgets.QTableWidget):
             3, QtWidgets.QHeaderView.Stretch)
 
         self.handler = lambda item: None
+        self.is_item_clicked = False
 
     def set_data(self, expenses: list[list[str]]):
         self.setRowCount(len(expenses))
@@ -28,10 +29,20 @@ class ExpenseView(QtWidgets.QTableWidget):
 
     def set_handler(self, handler: Callable[[int, int, str], None]):
         def func(item: QtWidgets.QTableWidgetItem):
+            if not self.is_item_clicked:
+                return
+            self.is_item_clicked = False
             r = item.row()
             c = item.column()
             s = item.text()
-            handler(r, c, s)
+            try:
+                handler(r, c, s)
+            except BaseException as ex:
+                QtWidgets.QMessageBox.critical(self, 'Ошибка', str(ex))
+
+        def func1(item):
+            self.is_item_clicked = True
 
         self.handler = func
         self.itemChanged.connect(self.handler)
+        self.itemDoubleClicked.connect(func1)

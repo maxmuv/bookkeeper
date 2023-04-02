@@ -24,7 +24,10 @@ class BudgetView(QtWidgets.QTableWidget):
             r = item.row()
             c = item.column()
             i = item.text()
-            handler(r, c, i)
+            try:
+                handler(r, c, i)
+            except BaseException as ex:
+                QtWidgets.QMessageBox.critical(self, 'Ошибка', str(ex))
         self.handler = func
         self.itemChanged.connect(self.handler)
 

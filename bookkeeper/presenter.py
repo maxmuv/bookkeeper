@@ -9,15 +9,18 @@ from bookkeeper.models.budget import Budget
 
 class Presenter:
     def __init__(self):
-        self.cat_repo = SqliteRepository[Category]("data/client_category.db", Category, True)
-        self.exp_repo = SqliteRepository[Expense]("data/client_expense.db", Expense, True)
-        self.bud_repo = SqliteRepository[Budget]("data/client_budget.db", Budget, True)
+        self.cat_repo = SqliteRepository[Category]("data/client_category.db", Category)
+        self.exp_repo = SqliteRepository[Expense]("data/client_expense.db", Expense)
+        self.bud_repo = SqliteRepository[Budget]("data/client_budget.db", Budget)
         self.view = View(600, 800)
         self.update_cat_view()
         self.update_exp_view()
+        self.update_bdg_view()
         self.view.register_cat_adder(self.add_ctg)
         self.view.register_cat_remover(self.del_ctg)
         self.view.register_adder_handler(self.expense_adder_handler_for_ctg_view)
+        self.view.register_exp_modifier(self.expense_modifier)
+        self.view.register_budget_modifier(self.budget_modifier)
 
     def update_cat_view(self):
         cats = self.cat_repo.get_all()
@@ -38,7 +41,7 @@ class Presenter:
                 exp_cat = self.cat_repo.get(e.category)
                 if exp_cat is None:
                     raise ValueError("Не существует категории для одного из расходов")
-                list_exps.append([e.expense_date, str(e.amount), exp_cat.name])
+                list_exps.append([e.expense_date, str(e.amount), exp_cat.name, e.comment])
         self.view.set_expense_list(list_exps)
         self.update_bdg_view()
 
@@ -60,6 +63,9 @@ class Presenter:
                 th_month = (dt.month == expdt.month) and (dt.month == expdt.month)
                 if th_month:
                     budget_list[2][0] += e.amount
+        bdg_in_repo = self.bud_repo.get_all()
+        for i, bdg in enumerate(bdg_in_repo):
+            budget_list[i][1] = bdg.budget
         self.view.set_budget(budget_list)
 
     def del_ctg(self, name: str) -> None:
@@ -97,3 +103,31 @@ class Presenter:
         exp.category = req_ctg[0].pk
         self.exp_repo.add(exp)
         self.update_exp_view()
+
+    def expense_modifier(self, row: int, column: int, new_field: str) -> None:
+        exps = self.exp_repo.get_all()
+        exp = exps[row]
+        if column == 0:
+            exp.expense_date = datetime.datetime.strptime(new_field, "%Y-%m-%d %H:%M:%S.%f")
+        elif column == 1:
+            exp.amount = int(new_field)
+        elif column == 2:
+            cat = self.cat_repo.get_all({"name": new_field})
+            if len(cat) == 0:
+                raise ValueError("Не существует данной категории")
+            exp.category = cat[0].pk
+        elif column == 3:
+            exp.comment = new_field
+        self.exp_repo.update(exp)
+        self.update_exp_view()
+
+    def budget_modifier(self, row: int, column: int, new_field: str) -> None:
+        bud_len = len(self.bud_repo.get_all())
+        for i in range(bud_len, 3):
+            bdg = Budget()
+            self.bud_repo.add(bdg)
+        bdg = Budget()
+        bdg.pk = row
+        bdg.budget = int(new_field)
+        self.bud_repo.update(bdg)
+

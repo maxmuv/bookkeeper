@@ -124,7 +124,7 @@ class SqliteRepository(AbstractRepository[T]):
                         update_command += f"{k}='{getattr(obj, k)}'"
                 else:
                     continue
-                if i+1 != len(self.fields.keys()):
+                if i+2 < len(self.fields.keys()):
                     update_command += ", "
             update_command += f" WHERE pk = {getattr(obj, 'pk')}"
             self.cursor.execute(update_command)
