@@ -9,9 +9,9 @@ from bookkeeper.models.budget import Budget
 
 class Presenter:
     def __init__(self) -> None:
-        self.cat_repo = SqliteRepository[Category]("data/client_category.db", Category)
-        self.exp_repo = SqliteRepository[Expense]("data/client_expense.db", Expense)
-        self.bud_repo = SqliteRepository[Budget]("data/client_budget.db", Budget)
+        self.cat_repo = SqliteRepository[Category]("client_category.db", Category)
+        self.exp_repo = SqliteRepository[Expense]("client_expense.db", Expense)
+        self.bud_repo = SqliteRepository[Budget]("client_budget.db", Budget)
         self.view = View(600, 800)
         self.update_cat_view()
         self.update_exp_view()
