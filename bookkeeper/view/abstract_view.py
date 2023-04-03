@@ -16,12 +16,12 @@ class AbstractView(Protocol):
         pass
 
     @abstractmethod
-    def register_cat_modifier(self, handler: Callable[[int], None]):
+    def register_cat_modifier(self, handler: Callable[[str, str], None]) -> None:
         pass
 
     @abstractmethod
-    def register_exp_modifier(self, handler: Callable[[int, int, str], None]):
+    def register_exp_modifier(self, handler: Callable[[int, int, str], None]) -> None:
         pass
 
-    def register_budget_modifier(self, handler: Callable[[int, int, str], None]):
+    def register_budget_modifier(self, handler: Callable[[int, int, str], None]) -> None:
         pass

@@ -7,12 +7,12 @@ from PySide6 import QtWidgets
 
 
 class MainWindow(QtWidgets.QWidget):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
 
 class View(AbstractView):
-    def __init__(self, width: int, height: int, *args, **kwargs):
+    def __init__(self, width: int, height: int, *args, **kwargs) -> None:
         self.window = MainWindow()
         self.window.setWindowTitle('The Bookkeeper App')
         self.window.resize(width, height)
@@ -38,19 +38,19 @@ class View(AbstractView):
     def set_expense_list(self, exp_list: list[list[str]]) -> None:
         self.expense_view.set_data(exp_list)
 
-    def register_cat_modifier(self, handler: Callable[[str, str], None]):
+    def register_cat_modifier(self, handler: Callable[[str, str], None]) -> None:
         self.category_view.register_handler(handler)
 
-    def register_cat_adder(self, handler: Callable[[str, str], None]):
+    def register_cat_adder(self, handler: Callable[[str, str], None]) -> None:
         self.category_view.set_ctg_adder_handler(handler)
 
-    def register_cat_remover(self, handler: Callable[[str], None]):
+    def register_cat_remover(self, handler: Callable[[str], None]) -> None:
         self.category_view.set_ctg_remover_handler(handler)
 
-    def register_exp_remover(self, handler: Callable[[int], None]):
+    def register_exp_remover(self, handler: Callable[[int], None]) -> None:
         self.expense_view.set_del_menu(handler)
 
-    def register_exp_modifier(self, handler: Callable[[int, int, str], None]):
+    def register_exp_modifier(self, handler: Callable[[int, int, str], None]) -> None:
         self.expense_view.set_handler(handler)
 
     def register_budget_modifier(self, handler: Callable[[int, int, str], None]):

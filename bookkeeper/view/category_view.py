@@ -1,9 +1,9 @@
-from PySide6 import QtWidgets, QtCore, QtGui
+from PySide6 import QtWidgets, QtGui
 from typing import Callable
 
 
 class EditDialog(QtWidgets.QDialog):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.add_del_menu = QtWidgets.QMenu(self)
         self.setWindowTitle("Категории")
@@ -11,7 +11,7 @@ class EditDialog(QtWidgets.QDialog):
         self.dlg_vbox = QtWidgets.QVBoxLayout()
         self.tree_view = QtWidgets.QTreeWidget()
 
-        def set_cur_item(item, c):
+        def set_cur_item(item: QtWidgets.QTreeWidgetItem, c: int) -> None:
             self.tree_view.setCurrentItem(item, c)
         self.tree_view.itemEntered.connect(set_cur_item)
 
@@ -22,11 +22,11 @@ class EditDialog(QtWidgets.QDialog):
         self.name = ""
         self.current_item = ""
 
-    def contextMenuEvent(self, event):
+    def contextMenuEvent(self, event: QtGui.QContextMenuEvent) -> None:
         self.add_del_menu.exec_(event.globalPos())
 
-    def set_cat_adder_handler(self, handler: Callable[[str | None, str], None]):
-        def func():
+    def set_cat_adder_handler(self, handler: Callable[[str | None, str], None]) -> None:
+        def func() -> None:
             item = self.tree_view.currentItem()
             name_widget = QtWidgets.QDialog()
             name_widget.setWindowTitle("Название")
@@ -35,10 +35,10 @@ class EditDialog(QtWidgets.QDialog):
             line.resize(50, 10)
             self.name = ""
 
-            def get_name(text):
+            def get_name(text: str) -> None:
                 self.name = text
 
-            def finish_editing():
+            def finish_editing() -> None:
                 name_widget.close()
 
             line.textChanged.connect(get_name)
@@ -59,8 +59,8 @@ class EditDialog(QtWidgets.QDialog):
         action.triggered.connect(self.adder_handler)
         self.add_del_menu.addAction(action)
 
-    def set_cat_remover_handler(self, handler: Callable[[str],None]):
-        def func():
+    def set_cat_remover_handler(self, handler: Callable[[str], None]) -> None:
+        def func() -> None:
             item = self.tree_view.currentItem()
             try:
                 if item is None:
@@ -75,11 +75,11 @@ class EditDialog(QtWidgets.QDialog):
         action.triggered.connect(self.remove_handler)
         self.add_del_menu.addAction(action)
 
-    def register_handler(self, handler: Callable[[str, str], None]):
-        def act_handler(item):
+    def register_handler(self, handler: Callable[[str, str], None]) -> None:
+        def act_handler(item: QtWidgets.QTreeWidgetItem) -> None:
             self.current_item = item.text(0)
 
-        def change_handler(item):
+        def change_handler(item: QtWidgets.QTreeWidgetItem) -> None:
             try:
                 handler(self.current_item, item.text(0))
             except BaseException as ex:
@@ -89,7 +89,7 @@ class EditDialog(QtWidgets.QDialog):
 
 
 class CategoryView(QtWidgets.QWidget):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.vbox = QtWidgets.QGridLayout()
         self.sum_label = QtWidgets.QLabel("Сумма")
@@ -111,7 +111,7 @@ class CategoryView(QtWidgets.QWidget):
         self.setLayout(self.vbox)
         self.dlg = EditDialog()
 
-    def edit_button_clicked(self):
+    def edit_button_clicked(self) -> None:
         self.dlg.exec()
 
     def set_data(self, cat: list[tuple[str, str | None]]) -> None:
@@ -132,19 +132,19 @@ class CategoryView(QtWidgets.QWidget):
                 node_list[c_tuple[1]].addChild(child)
         self.list_view.addItems(cat_list)
 
-    def register_handler(self, handler: Callable[[str, str], None]):
+    def register_handler(self, handler: Callable[[str, str], None]) -> None:
         self.dlg.register_handler(handler)
 
-    def adder_handler(self, handler: Callable[[int, str], None]):
-        def func():
+    def adder_handler(self, handler: Callable[[int, str], None]) -> None:
+        def func() -> None:
             try:
                 handler(int(self.line.text()), self.list_view.currentText())
             except BaseException as ex:
                 QtWidgets.QMessageBox.critical(self, 'Ошибка', str(ex))
         self.sum_button.clicked.connect(func)
 
-    def set_ctg_adder_handler(self, handler: Callable[[str, str], None]):
+    def set_ctg_adder_handler(self, handler: Callable[[str, str], None]) -> None:
         self.dlg.set_cat_adder_handler(handler)
 
-    def set_ctg_remover_handler(self, handler: Callable[[str], None]):
+    def set_ctg_remover_handler(self, handler: Callable[[str], None]) -> None:
         self.dlg.set_cat_remover_handler(handler)

@@ -1,8 +1,6 @@
 """
 Модуль описывает репозиторий, работающий с СУБД SQLite
 """
-import datetime
-from dataclasses import field
 import sqlite3
 from inspect import get_annotations
 from typing import Any
@@ -10,9 +8,11 @@ import os
 
 from bookkeeper.repository.abstract_repository import AbstractRepository, T
 
-def convert_types(annotation_dict: dict)->list[str]:
+
+def convert_types(annotation_dict: dict[str, str]) -> list[str]:
     """
-    Вспомогательная функция для перевода аннотации класса в строку типов для базы данных(для определение типа используются дефолтные объекты)
+    Вспомогательная функция для перевода аннотации класса в строку типов
+     для базы данных(для определение типа используются дефолтные объекты)
 
     Parameters
     ----------
@@ -32,7 +32,8 @@ def convert_types(annotation_dict: dict)->list[str]:
             continue
     return res
 
-def str2obj(cls: type, s: list, fields: dict)->T|None:
+
+def str2obj(cls: type, s: list[str], fields: dict[str, str]) -> Any:
     if len(s) == 0:
         return None
     args_tuple = s[0]
@@ -41,11 +42,12 @@ def str2obj(cls: type, s: list, fields: dict)->T|None:
         setattr(res, f, args_tuple[i])
     return res
 
+
 class SqliteRepository(AbstractRepository[T]):
     """
     Класс-репозиторий, который обеспечивает подключение к базе данных и работает с ней
     """
-    def __init__(self, db_name: str, cls: type, remove_after=False) -> None:
+    def __init__(self, db_name: str, cls: type, remove_after: bool = False) -> None:
         """
         Подключает к базе данных, создает таблицу, если она не существует
 
@@ -123,8 +125,8 @@ class SqliteRepository(AbstractRepository[T]):
                         update_command += f"{k}='{getattr(obj, k)}'"
                 else:
                     continue
-                if i+2 < len(self.fields.keys()):
-                    update_command += ", "
+                update_command += ", "
+            update_command = update_command[:-2]
             update_command += f" WHERE pk = {getattr(obj, 'pk')}"
             self.cursor.execute(update_command)
             self.connection.commit()
@@ -139,4 +141,3 @@ class SqliteRepository(AbstractRepository[T]):
         self.connection.close()
         if self.remove_after:
             os.remove(self.db_name)
-

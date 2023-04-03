@@ -8,7 +8,7 @@ from bookkeeper.models.budget import Budget
 
 
 class Presenter:
-    def __init__(self):
+    def __init__(self) -> None:
         self.cat_repo = SqliteRepository[Category]("data/client_category.db", Category)
         self.exp_repo = SqliteRepository[Expense]("data/client_expense.db", Expense)
         self.bud_repo = SqliteRepository[Budget]("data/client_budget.db", Budget)
@@ -24,7 +24,7 @@ class Presenter:
         # self.view.register_cat_modifier(self.ctg_modifier)
         self.view.register_exp_remover(self.del_handler)
 
-    def update_cat_view(self):
+    def update_cat_view(self) -> None:
         cats = self.cat_repo.get_all()
         list_cats = []
         if len(cats) != 0:
@@ -35,7 +35,7 @@ class Presenter:
                     list_cats.append((c.name, None))
         self.view.set_category_list(list_cats)
 
-    def update_exp_view(self):
+    def update_exp_view(self) -> None:
         exps = self.exp_repo.get_all()
         list_exps = []
         if len(exps) != 0:
@@ -47,7 +47,7 @@ class Presenter:
         self.view.set_expense_list(list_exps)
         self.update_bdg_view()
 
-    def update_bdg_view(self):
+    def update_bdg_view(self) -> None:
         exps = self.exp_repo.get_all()
         budget_list = [[0, 0], [0, 0], [0, 0]]
         dt = datetime.datetime.now()
@@ -56,7 +56,8 @@ class Presenter:
                 exp_cat = self.cat_repo.get(e.category)
                 if exp_cat is None:
                     raise ValueError("Не существует категории для одного из расходов")
-                expdt = datetime.datetime.strptime(str(e.expense_date), "%Y-%m-%d %H:%M:%S.%f")
+                expdt = datetime.datetime.strptime(
+                    str(e.expense_date), "%Y-%m-%d %H:%M:%S.%f")
                 days_pass = abs((dt - expdt).days)
                 if days_pass < 1:
                     budget_list[0][0] += e.amount
@@ -110,7 +111,8 @@ class Presenter:
         exps = self.exp_repo.get_all()
         exp = exps[row]
         if column == 0:
-            exp.expense_date = datetime.datetime.strptime(new_field, "%Y-%m-%d %H:%M:%S.%f")
+            exp.expense_date = datetime.datetime.strptime(
+                new_field, "%Y-%m-%d %H:%M:%S.%f")
         elif column == 1:
             exp.amount = int(new_field)
         elif column == 2:
@@ -142,7 +144,7 @@ class Presenter:
         self.update_exp_view()
         self.update_cat_view()
 
-    def del_handler(self, row: int):
+    def del_handler(self, row: int) -> None:
         exps = self.exp_repo.get_all()
         for i in range(row, len(exps)):
             self.exp_repo.delete(exps[i].pk)
